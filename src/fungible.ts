@@ -1,5 +1,5 @@
-import normalizeError from '../normalizeError';
-import generateId from '../generateId';
+import {normalizeError} from './utils/normalizeError';
+import {generateId} from './utils/generateId';
 import {cancelable} from './retry';
 import {CancelablePromise} from './cancellablePromise';
 

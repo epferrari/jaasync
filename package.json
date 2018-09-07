@@ -1,0 +1,25 @@
+{
+  "name": "async-utils",
+  "version": "1.0.0",
+  "description": "Utilities for an asyncronous world",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "async",
+    "promise",
+    "future",
+    "utilities",
+    "await"
+  ],
+  "author": "Ethan Ferrari <github@ethanferrari.com>",
+  "license": "MIT",
+  "dependencies": {
+    "core-decorators": "^0.20.0"
+  },
+  "devDependencies": {
+    "@types/jasmine": "^2.8.8",
+    "jasmine": "^3.2.0"
+  }
+}

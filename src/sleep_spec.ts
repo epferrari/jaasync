@@ -1,7 +1,7 @@
 import {CancelablePromise, DefaultCanceledRejectMsg} from './cancellablePromise';
 import {sleep} from './sleep';
 
-describe('timeout', () => {
+describe('sleep', () => {
   let p: CancelablePromise<any>;
   beforeEach(() => {
     p = sleep(25);
