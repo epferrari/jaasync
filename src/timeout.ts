@@ -7,7 +7,7 @@ export class TimeoutExpiredError extends Error {
 export function timeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   let pending: boolean = true;
   return new Promise<T>(async (resolve, reject) => {
-    let cleanup;
+    let cleanup: () => void;
     let t = setTimeout(() => {
       if(pending) {
         pending = false;

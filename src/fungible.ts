@@ -1,22 +1,19 @@
 import {normalizeError} from './utils/normalizeError';
 import {generateId} from './utils/generateId';
-import {cancelable} from './retry';
-import {CancelablePromise} from './cancellablePromise';
+import {CancelablePromise} from './cancelable';
+const REPLACE = `REPLACE_${generateId()}`;
 
-
-type PromiseProxy<T> = {
+interface PromiseProxy<T> {
   pending: boolean;
   resolve: (value: T) => void;
   reject: (error: Error) => void;
   cancel: (reason: string) => void;
-};
+}
 
-export type FungiblePromise<T> = Promise<T> & {
+export interface FungiblePromise<T> extends Promise<T> {
   swap(promise: Promise<T>): void;
   pending: boolean;
-};
-
-const REPLACE = `REPLACE_${generateId()}`;
+}
 
 export function fungible<T>(promise: Promise<T>): FungiblePromise<T> {
   const fungibles = new FungiblePromiseMap<T>();
@@ -28,6 +25,12 @@ export function fungible<T>(promise: Promise<T>): FungiblePromise<T> {
     fungibles.transfer(proxy, p);
   };
   return proxy as FungiblePromise<T>;
+}
+
+export class FungiblePromise<T> {
+ constructor(promise: Promise<T>) {
+   return fungible<T>(promise);
+ }
 }
 
 class FungiblePromiseMap<T> {
@@ -72,8 +75,8 @@ class FungiblePromiseMap<T> {
     resolve: PromiseProxy<T>['resolve'],
     reject: PromiseProxy<T>['reject']
   ): CancelablePromise<T> {
-    const c = cancelable<T>(() => promise);
-    (async() => {
+    const c = new CancelablePromise<T>(() => promise);
+    (async () => {
       try {
         const value = await c;
         resolve(value);

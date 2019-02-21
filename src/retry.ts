@@ -1,5 +1,8 @@
-import {isNil} from 'lodash';
-import {CancelablePromise, DefaultCanceledRejectMsg, Canceller} from './cancellablePromise';
+export type Canceller = (reason?: string) => boolean;
+export const DefaultCanceledRejectMsg = 'Canceled';
+export interface CancelablePromise<T> extends Promise<T> {
+  cancel: Canceller;
+}
 import {sleep} from './sleep';
 
 type RetryOptions = {
@@ -54,7 +57,7 @@ export function retry<T>(
         resolve(result);
         return;
       } catch (err) {
-        if (!isNil(maxRetryAttempts) && retryCount >= maxRetryAttempts) {
+        if (Number.isInteger(maxRetryAttempts) && retryCount >= maxRetryAttempts) {
           // no more attempts, reject and break retry loop
           done = true;
           reject(err);
@@ -83,4 +86,10 @@ export function retry<T>(
 
 export function cancelable<T>(task: () => Promise<T>): CancelablePromise<T> {
   return retry(task, {maxRetryAttempts: 0});
+}
+
+export class CancelablePromise<T> {
+  constructor(task: () => Promise<T>) {
+    return cancelable<T>(task);
+  }
 }

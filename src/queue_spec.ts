@@ -1,21 +1,21 @@
 import {TransactionQueue} from './queue';
-import {deferred} from './deferred';
+import {Deferred} from './deferred';
 import {sleep} from './sleep';
 
 describe('TransactionQueue', () => {
-  let spy1;
-  let spy2;
-  let spy3;
-  let spy4;
+  let spy1: jasmine.Spy;
+  let spy2: jasmine.Spy;
+  let spy3: jasmine.Spy;
+  let spy4: jasmine.Spy;
 
-  let deferred1;
-  let deferred2;
-  let deferred3;
+  let deferred1: Deferred<any>;
+  let deferred2: Deferred<any>;
+  let deferred3: Deferred<any>;
 
-  let operation1;
-  let operation2;
-  let operation3;
-  let operation4;
+  let operation1: () => Promise<void>;
+  let operation2: () => Promise<void>;
+  let operation3: () => Promise<void>;
+  let operation4: () => Promise<void>;
 
   let queue: TransactionQueue;
 
@@ -25,9 +25,9 @@ describe('TransactionQueue', () => {
     spy3 = jasmine.createSpy('spy3');
     spy4 = jasmine.createSpy('spy4');
 
-    deferred1 = deferred<void>();
-    deferred2 = deferred<void>();
-    deferred3 = deferred<void>();
+    deferred1 = new Deferred<void>();
+    deferred2 = new Deferred<void>();
+    deferred3 = new Deferred<void>();
 
     operation1 = async (): Promise<void> => {
       spy1();

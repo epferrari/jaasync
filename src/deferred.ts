@@ -6,6 +6,12 @@ export interface Deferred<T> extends Promise<T> {
   rejected: boolean;
 }
 
+export class Deferred<T> {
+  constructor() {
+    return deferred<T>();
+  }
+}
+
 export function deferred<T>(): Deferred<T> {
   let resolve, reject, resolved = false, rejected = false, pending = true;
   const p = new Promise((_resolve, _reject) => {

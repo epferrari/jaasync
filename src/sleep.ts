@@ -1,6 +1,10 @@
-import {CancelablePromise, Canceller, DefaultCanceledRejectMsg} from './cancellablePromise';
+import {
+  CancelablePromise,
+  Canceller,
+  DefaultCanceledRejectMsg
+} from './cancelable';
 
-export function sleep<T>(ms: number): CancelablePromise <T> {
+export function sleep<T>(ms: number): CancelablePromise<T> {
   let cancel: Canceller;
 
   const p = new Promise<T>((resolve, reject) => {

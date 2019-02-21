@@ -1,22 +1,22 @@
 import {ParallelResult, parallel} from './parallel';
 import {sleep} from './sleep';
-import {deferred, Deferred} from './deferred';
+import {Deferred} from './deferred';
 
 describe('parallel', () => {
   let p,
     t1: Deferred<string>,
     t2: Deferred<string>,
     t3: Deferred<string>,
-    spy,
+    spy: jasmine.Spy,
     result: ParallelResult<any>;
 
   describe('given an array of promises', () => {
     beforeEach(() => {
       spy = jasmine.createSpy('spy');
       p = parallel([
-        t1 = deferred<string>(),
-        t2 = deferred<string>(),
-        t3 = deferred<string>()
+        t1 = new Deferred<string>(),
+        t2 = new Deferred<string>(),
+        t3 = new Deferred<string>()
       ]);
       p.then(r => {
         result = r;

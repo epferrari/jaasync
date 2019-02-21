@@ -1,15 +1,14 @@
-import {retry} from './retry';
-import {DefaultCanceledRejectMsg} from './cancellablePromise';
+import {retry, DefaultCanceledRejectMsg} from './retry';
 
 describe('retry', () => {
-  let createTask,
-    task;
-  const decay = 1,
-    retryInterval = 100; // consistent 1/10 second between task invocations;
+  let createTask: (n: number) => () => Promise<any>;
+  let task: jasmine.Spy;
+  const decay = 1;
+  const retryInterval = 100; // consistent 1/10 second between task invocations;
 
   beforeEach(() => {
     task = jasmine.createSpy('task');
-    createTask = failuresBeforeSuccess => {
+    createTask = (failuresBeforeSuccess) => {
       let count = 0;
       return (() => {
         task();
