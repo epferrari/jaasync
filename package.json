@@ -2,9 +2,17 @@
   "name": "async-utils",
   "version": "1.0.0",
   "description": "Utilities for an asyncronous world",
-  "main": "index.js",
+  "main": "lib/index.js",
+  "types": "lib/index.d.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "./node_modules/.bin/tsc",
+    "lint": "./node_modules/.bin/tslint -c tslint.json -p tsconfig.json",
+    "test": "npm run build && ./node_modules/.bin/jasmine lib/**/*_spec.js",
+    "validate": "npm run test && npm run lint",
+    "install": "([ -d ./src ] && [ ! -d ./lib ] && mkdir lib && npm install . &&  npm run build) || echo ''",
+    "prepare": "npm run build",
+    "version": "git add -A src",
+    "postversion": "git push && git push --tags"
   },
   "keywords": [
     "async",
@@ -16,10 +24,16 @@
   "author": "Ethan Ferrari <github@ethanferrari.com>",
   "license": "MIT",
   "dependencies": {
-    "core-decorators": "^0.20.0"
+    "core-decorators": "^0.20.0",
+    "lodash": "^4.17.11"
   },
   "devDependencies": {
-    "@types/jasmine": "^2.8.8",
-    "jasmine": "^3.2.0"
+    "@types/jasmine": "^2.8.16",
+    "@types/lodash": "^4.14.121",
+    "@types/node": "^10.12.10",
+    "jasmine": "^3.2.0",
+    "tslint": "^5.11.0",
+    "typedoc": "^0.14.2",
+    "typescript": "^3.3.3"
   }
 }
