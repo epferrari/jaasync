@@ -1,5 +1,5 @@
 {
-  "name": "async-utils",
+  "name": "await-for-it",
   "version": "0.9.0",
   "description": "Utilities for an asyncronous world",
   "main": "lib/index.js",
@@ -23,7 +23,7 @@
     "await"
   ],
   "author": "Ethan Ferrari <github@ethanferrari.com>",
-  "repository": "https://github.com/epferrari/async-utils",
+  "repository": "https://github.com/epferrari/await-for-it",
   "license": "MIT",
   "dependencies": {
     "core-decorators": "^0.20.0"
