@@ -1,7 +1,7 @@
 {
-  "name": "await-for-it",
+  "name": "jaasync",
   "version": "0.9.0",
-  "description": "Utilities for an asyncronous world",
+  "description": "Just another async utility library",
   "main": "lib/index.js",
   "types": "lib/index.d.js",
   "scripts": {
@@ -23,7 +23,7 @@
     "await"
   ],
   "author": "Ethan Ferrari <github@ethanferrari.com>",
-  "repository": "https://github.com/epferrari/await-for-it",
+  "repository": "https://github.com/epferrari/jaasync",
   "license": "MIT",
   "dependencies": {
     "core-decorators": "^0.20.0"
