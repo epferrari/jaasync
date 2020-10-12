@@ -1,4 +1,4 @@
-import {CancelablePromise, DefaultCanceledRejectMsg, sleep} from './cancelable';
+import {CancelablePromise, sleep} from './cancelable';
 
 describe('sleep', () => {
   let p: CancelablePromise<any>;
@@ -9,7 +9,7 @@ describe('sleep', () => {
   describe('given the delay period has not elapsed', () => {
     it('the promise can be canceled', done => {
       p.then(done.fail.bind(done)).catch(e => {
-        expect(e).toEqual(DefaultCanceledRejectMsg);
+        expect(e).toEqual(CancelablePromise.DEFAULT_REJECTION_MESSAGE);
         done();
       });
 

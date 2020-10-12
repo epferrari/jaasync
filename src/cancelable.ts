@@ -1,8 +1,5 @@
-import {isNil} from './utils/isNil';
-
 /* cancelable */
 export type Canceller = (reason?: string) => boolean;
-export const DefaultCanceledRejectMsg = 'Canceled';
 export interface CancelablePromise<T> extends Promise<T> {
   cancel: Canceller;
 }
@@ -11,6 +8,10 @@ export class CancelablePromise<T> {
   constructor(task: (params: retry.TaskParams) => Promise<T>) {
     return cancelable<T>(task);
   }
+}
+
+export namespace CancelablePromise {
+  export const DEFAULT_REJECTION_MESSAGE = 'Canceled';
 }
 
 // legacy factory
@@ -59,7 +60,7 @@ export function retry<T>(
     let attempts = 0;
     let awaiter: CancelablePromise<T>;
 
-    cancel = (reason: string = DefaultCanceledRejectMsg) => {
+    cancel = (reason: string = CancelablePromise.DEFAULT_REJECTION_MESSAGE) => {
       if (done) {
         return false;
       }
@@ -151,7 +152,7 @@ export function sleep<T>(ms: number): CancelablePromise<T> {
       resolve();
     }, ms);
 
-    cancel = (reason: string = DefaultCanceledRejectMsg) => {
+    cancel = (reason: string = CancelablePromise.DEFAULT_REJECTION_MESSAGE) => {
       if (t) {
         clearTimeout(t);
         t = undefined;

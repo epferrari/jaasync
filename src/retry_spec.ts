@@ -1,4 +1,4 @@
-import {retry, DefaultCanceledRejectMsg} from './cancelable';
+import {retry, CancelablePromise} from './cancelable';
 
 describe('retry', () => {
   let createTask: (n: number) => () => Promise<any>;
@@ -110,7 +110,7 @@ describe('retry', () => {
         const r = retry<string>(createTask(10));
 
         r.then(done.fail).catch(e => {
-          expect(e).toEqual(DefaultCanceledRejectMsg);
+          expect(e).toEqual(CancelablePromise.DEFAULT_REJECTION_MESSAGE);
           done();
         });
 

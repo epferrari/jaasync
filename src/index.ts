@@ -3,7 +3,7 @@ import {deferred, Deferred} from './deferred';
 import {parallel, ParallelResult} from './parallel';
 import {safe} from './safe';
 import {FungiblePromise, fungible} from './fungible';
-import {timeout} from './timeout';
+import {timeout, TimeoutExpiredError} from './timeout';
 import {isPromise} from './utils/isPromise';
 
 export {
@@ -19,5 +19,6 @@ export {
   fungible, // factory
   FungiblePromise, // class + interface
   timeout,
+  TimeoutExpiredError,
   isPromise
 };
