@@ -1,16 +1,17 @@
 {
   "name": "async-utils",
-  "version": "1.0.0",
+  "version": "0.9.0",
   "description": "Utilities for an asyncronous world",
   "main": "lib/index.js",
   "types": "lib/index.d.js",
   "scripts": {
-    "build": "./node_modules/.bin/tsc",
-    "lint": "./node_modules/.bin/tslint -c tslint.json -p tsconfig.json",
-    "test": "npm run build && ./node_modules/.bin/jasmine lib/*_spec.js",
+    "dev": "./node_modules/.bin/tsc -p tsconfig.dev.json",
+    "dist": "./node_modules/.bin/tsc -p tsconfig.dist.json",
+    "lint": "./node_modules/.bin/tslint -c tslint.json -p tsconfig.dev.json",
+    "test": "npm run dev && ./node_modules/.bin/jasmine lib/*_spec.js",
     "validate": "npm run test && npm run lint",
-    "install": "([ -d ./src ] && [ ! -d ./lib ] && mkdir lib && npm install . &&  npm run build) || echo ''",
-    "prepare": "npm run build",
+    "install": "([ -d ./src ] && [ ! -d ./lib ] && mkdir lib && npm install . &&  npm run dist) || echo ''",
+    "prepare": "npm run dist",
     "version": "git add -A src",
     "postversion": "git push && git push --tags"
   },

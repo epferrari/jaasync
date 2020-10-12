@@ -2,7 +2,7 @@ import {isPromise} from './isPromise';
 
 describe('isPromise', () => {
   it('returns true for promises', () => {
-    const promise = async () => {};
+    const promise = async () => ({});
     expect(isPromise(promise())).toEqual(true);
   });
 
