@@ -1,91 +1,89 @@
-import {normalizeError} from './utils/normalizeError';
-import {generateId} from './utils/generateId';
-import {CancelablePromise} from './cancelable';
-const REPLACE = `REPLACE_${generateId()}`;
+import {autobind} from 'core-decorators';
 
-interface PromiseProxy<T> {
-  pending: boolean;
-  resolve: (value: T) => void;
-  reject: (error: Error) => void;
-  cancel: (reason: string) => void;
+import {isPromise} from './utils/isPromise';
+
+export type Swappable<T> = (wasCanceled: () => boolean) => Promise<T>;
+
+// legacy factory
+export function fungible<T>(target: Promise<T>|Swappable<T>): FungiblePromise<T> {
+  return new FungiblePromise(target);
 }
 
-export interface FungiblePromise<T> extends Promise<T> {
-  swap(promise: Promise<T>): void;
-  pending: boolean;
-}
+@autobind
+export class FungiblePromise<T> implements Promise<T> {
+  public [Symbol.toStringTag]: string = 'Promise';
 
-export function fungible<T>(promise: Promise<T>): FungiblePromise<T> {
-  const fungibles = new FungiblePromiseMap<T>();
-  const proxy = fungibles.create(promise);
-  (proxy as FungiblePromise<T>).swap = (p: Promise<T>) => {
-    if(!proxy.pending) {
+  private _i: number = 0;
+  private _pending: boolean = true;
+  private _resolve!: (value: T) => void;
+  private _reject!: (error: any) => void;
+  private readonly _promise: Promise<T>;
+
+  constructor(promise: Promise<T>|Swappable<T>) {
+    this._promise = new Promise<T>((resolve, reject) => {
+      this._resolve = resolve;
+      this._reject = reject;
+    });
+    this.bind(promise);
+  }
+
+  public then<TResult1 = T, TResult2 = never>(
+    onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null,
+    onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null
+  ): Promise<TResult1 | TResult2> {
+    return this._promise.then(onfulfilled, onrejected);
+  }
+
+  public catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): Promise<T | TResult> {
+    return this._promise.catch(onrejected);
+  }
+
+  public finally(onfinally?: (() => void) | undefined | null): Promise<T> {
+    return this._promise.finally(onfinally);
+  }
+
+  public swap(target: Promise<T>|Swappable<T>): void {
+    if(!this._pending) {
       throw new Error('Cannot invoke #swap on resolved <FungiblePromise>');
     }
-    fungibles.transfer(proxy, p);
-  };
-  return proxy as FungiblePromise<T>;
-}
-
-export class FungiblePromise<T> {
- constructor(promise: Promise<T>) {
-   return fungible<T>(promise);
- }
-}
-
-class FungiblePromiseMap<T> {
-  private proxies = new WeakMap<Promise<T>, PromiseProxy<T>>();
-
-  public create(promise: Promise<T>): Promise<T> & {pending: boolean} {
-    let resolve: PromiseProxy<T>['resolve'];
-    let reject: PromiseProxy<T>['reject'];
-    let pending: boolean = true;
-    const proxy = new Promise<T>((res, rej) => {
-      resolve = (value: T) => {
-        pending = false;
-        res(value);
-      };
-      reject = (error: Error) => {
-        pending = false;
-        rej(error);
-      };
-    });
-    const {cancel}: CancelablePromise<T> = this.bindProxy(promise, resolve, reject);
-    this.proxies.set(proxy, {pending, resolve, reject, cancel});
-    Object.defineProperty(proxy, 'pending', {
-      get() {
-        return pending;
-      }
-    });
-    return proxy as Promise<T> & {pending: boolean};
+    this.bind(target);
   }
 
-  public transfer(proxy: Promise<T>, promise: Promise<T>): Promise<T> {
-    const {pending, resolve, reject, cancel: cancelPrevious} = this.proxies.get(proxy);
-    if(pending) {
-      cancelPrevious(REPLACE);
-      const {cancel}: CancelablePromise<T> = this.bindProxy(promise, resolve, reject);
-      this.proxies.set(proxy, {pending, resolve, reject, cancel});
+  private resolve(value: T): void {
+    this._pending = false;
+    this._resolve(value);
+  }
+
+  private reject(error: any): void {
+    this._pending = false;
+    this._reject(error);
+  }
+
+  public get pending(): boolean {
+    return this._pending;
+  }
+
+  private async bind(target: Promise<T>|Swappable<T>): Promise<void> {
+    const i = ++this._i;
+
+    let p: Promise<T>;
+    if(isPromise(target)) {
+      p = target;
+    } else {
+      const wasCanceled = (): boolean => {
+        return i !== this._i;
+      };
+      p = target(wasCanceled);
     }
-    return proxy;
-  }
-
-  private bindProxy(
-    promise: Promise<T>,
-    resolve: PromiseProxy<T>['resolve'],
-    reject: PromiseProxy<T>['reject']
-  ): CancelablePromise<T> {
-    const c = new CancelablePromise<T>(() => promise);
-    (async () => {
-      try {
-        const value = await c;
-        resolve(value);
-      } catch(e) {
-        if(normalizeError(e) !== REPLACE) {
-          reject(e);
-        }
+    try {
+      const value = await p;
+      if(i === this._i) {
+        this.resolve(value);
       }
-    })();
-    return c;
+    } catch(e) {
+      if(i === this._i) {
+        this.reject(e);
+      }
+    }
   }
 }

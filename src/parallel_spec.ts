@@ -1,8 +1,9 @@
-import {ParallelResult, parallel} from './parallel';
-import {sleep} from './sleep';
+import {sleep} from './cancelable';
 import {Deferred} from './deferred';
+import {ParallelResult, parallel} from './parallel';
 
 describe('parallel', () => {
+  // tslint:disable-next-line
   let p,
     t1: Deferred<string>,
     t2: Deferred<string>,
@@ -85,11 +86,11 @@ describe('parallel', () => {
         expect(result.items.length).toBe(3);
         expect(result.fulfilled.length).toBe(0);
         expect(result.rejected.length).toBe(3);
-        expect(result.rejected[0].error).toEqual('foo');
+        expect(result.rejected[0].error.message).toEqual('foo');
         expect(result.rejected[0].value).toEqual(undefined);
-        expect(result.rejected[1].error).toEqual('bar');
+        expect(result.rejected[1].error.message).toEqual('bar');
         expect(result.rejected[1].value).toEqual(undefined);
-        expect(result.rejected[2].error).toEqual('baz');
+        expect(result.rejected[2].error.message).toEqual('baz');
         expect(result.rejected[2].value).toEqual(undefined);
       });
     });
@@ -124,9 +125,9 @@ describe('parallel', () => {
         expect(result.fulfilled.length).toBe(1);
         expect(result.rejected.length).toBe(2);
 
-        expect(result.rejected[0].error).toEqual('foo');
+        expect(result.rejected[0].error.message).toEqual('foo');
         expect(result.rejected[0].value).toEqual(undefined);
-        expect(result.rejected[1].error).toEqual('baz');
+        expect(result.rejected[1].error.message).toEqual('baz');
         expect(result.rejected[1].value).toEqual(undefined);
         expect(result.fulfilled[0].error).toEqual(undefined);
         expect(result.fulfilled[0].value).toEqual('bar');

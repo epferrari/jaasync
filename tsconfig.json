@@ -9,7 +9,9 @@
     "experimentalDecorators": true,
     "baseUrl": ".",
     "outDir": "./lib",
-    "declaration": true
+    "declaration": true,
+    "strictNullChecks": true,
+    "strictPropertyInitialization": true
   },
   "compileOnSave": false,
   "include": [

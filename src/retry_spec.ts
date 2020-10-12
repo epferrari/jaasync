@@ -1,4 +1,4 @@
-import {retry, DefaultCanceledRejectMsg} from './retry';
+import {retry, DefaultCanceledRejectMsg} from './cancelable';
 
 describe('retry', () => {
   let createTask: (n: number) => () => Promise<any>;

@@ -1,5 +1,5 @@
-import {Deferred, deferred} from './deferred';
 import {autobind} from 'core-decorators';
+import {Deferred, deferred} from './deferred';
 
 type TransactionId = string;
 type Operation<T> = (childTransaction: TransactionQueue['transaction']) => Promise<T>|T;
@@ -13,12 +13,13 @@ type QueuedOperation<T> = {
 export class TransactionQueue {
   private queue: Map<string, QueuedOperation<any>> = new Map<string, QueuedOperation<any>>();
   private position: number = 0;
-  private currentScope: TransactionId;
+  private currentScope: TransactionId|null = null;
   protected depth: number = 0;
 
   public async transaction<T>(operation: Operation<T>): Promise<T> {
     if(this.currentScope) {
-      return this.queue.get(this.currentScope).childScope.transaction(operation);
+      const item = this.queue.get(this.currentScope) as QueuedOperation<T>;
+      return item.childScope.transaction(operation);
     }
     const transactionId: TransactionId = this.createTransactionId();
     const ready = this.awaitQueuePosition();
@@ -59,7 +60,8 @@ export class TransactionQueue {
   }
 
   private async executeOperation<T>(transactionId: TransactionId): Promise<T> {
-    const {operation, childScope} = this.queue.get(transactionId);
+    const item = this.queue.get(transactionId) as QueuedOperation<T>;
+    const {operation, childScope} = item;
     this.currentScope = transactionId;
     const executedOperation = operation(childScope.transaction);
     this.currentScope = null;
@@ -67,7 +69,8 @@ export class TransactionQueue {
   }
 
   private closeTransaction(transactionId: TransactionId) {
-    const {resolver} = this.queue.get(transactionId);
+    const item = this.queue.get(transactionId) as QueuedOperation<any>;
+    const {resolver} = item;
     resolver.resolve();
     this.queue.delete(transactionId);
   }

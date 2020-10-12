@@ -1,9 +1,8 @@
-// Catches errors thrown by an async function
-
-export async function safe<T>(fn: () => Promise<T>): Promise<T> {
+// catches errors thrown by an async function
+export async function safe<T>(fn: () => Promise<T>): Promise<T|undefined> {
   try {
     return await fn();
   } catch(e) {
-    return null;
+    return undefined;
   }
 }

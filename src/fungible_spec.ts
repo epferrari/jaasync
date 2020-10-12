@@ -1,6 +1,7 @@
-import {Deferred} from './Deferred';
+import {sleep} from './cancelable';
+import {Deferred} from './deferred';
 import {FungiblePromise} from './fungible';
-import {sleep} from './sleep';
+
 
 describe('fungible', () => {
   describe('given the fungible has been neither resolved nor rejected', () => {

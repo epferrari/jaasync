@@ -1,6 +1,7 @@
-import {timeout, TimeoutExpiredError} from './timeout';
-import {sleep} from './sleep';
+import {sleep} from './cancelable';
 import {deferred} from './deferred';
+import {timeout, TimeoutExpiredError} from './timeout';
+
 
 describe('timeout', () => {
   describe('given the timeout ms expires before the promise is resolved', () => {

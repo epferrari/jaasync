@@ -1,70 +1,100 @@
+import {isPromise} from './utils/isPromise';
+
 type ResolutionStatus = {fulfilled: boolean};
-type Fulfillment<T> = ResolutionStatus & {value: T, error: null};
-type Rejection = ResolutionStatus & {error: any, value: null};
+type Fulfillment<T> = ResolutionStatus & {value: T, error: undefined, index: number};
+type Rejection = ResolutionStatus & {error: Error, value: undefined, index: number};
 
-export interface ParallelResult<T> {
-  items: (Fulfillment<T>|Rejection)[];
-  fulfilled: Fulfillment<T>[];
-  rejected: Rejection[];
-  allFulfilled: boolean;
-  allRejected: boolean;
-  anyFulfilled: boolean;
-  anyRejected: boolean;
-  someFulfilled: boolean;
-}
-
-function isPromise<T>(p: any): p is Promise<T> {
-  return typeof p.then === 'function';
-}
-
-export async function parallel<T>(promises: (Promise<T>|(() => Promise<T>))[]): Promise<ParallelResult<T>> {
-  const wrapper = promises.map(async (p) => {
+export async function parallel<T>(promises: (parallel.Parallelizable<T>|Promise<T>)[]): Promise<parallel.Result<T>> {
+  const wrapper = promises.map(async (p, index) => {
     try {
-      let value: T;
-      if(isPromise<T>(p)) {
-        value = await p;
+      const value: T = isPromise<T>(p)
+        ? await p
+        : await p();
+      return {fulfilled: true, value, error: undefined, index};
+    } catch (e) {
+      let error: Error;
+      if(e instanceof Error) {
+        error = e;
       } else {
-        value = await p();
+        try {
+          error = new Error(e.toString());
+        } catch(e) {
+          error = new Error(`parallel execution error at index ${index}.`);
+        }
       }
-      return {fulfilled: true, value};
-    } catch (error) {
-      return {fulfilled: false, error};
+      return {fulfilled: false, value: undefined, error, index};
     }
   });
 
-  const result = await Promise.all(wrapper);
+  const result: (Fulfillment<T>|Rejection)[] = await Promise.all(wrapper);
 
-  return {
-    get items() {
-      return result.slice(0) as (Fulfillment<T>|Rejection)[];
-    },
+  return new ParallelResult<T>(result);
+}
 
-    get fulfilled(): Fulfillment<T>[] {
-      return result.filter(p => p.fulfilled) as Fulfillment<T>[];
-    },
+type _Rejection = Rejection;
+type _Fulfillment<T> = Fulfillment<T>;
+export namespace parallel {
+  export type Parallelizable<T> = () => Promise<T>|T;
+  export type Result<T> = ParallelResult<T>;
+  // tslint:disable-next-line:no-shadowed-variable
+  export type Fulfillment<T> = _Fulfillment<T>;
+  // tslint:disable-next-line:no-shadowed-variable
+  export type Rejection = _Rejection;
+  // this oddity is because in node, an immediately invoked async function
+  // that results in rejected promise, even though caught in parallel, is still being
+  // treated as an unhandled rejection
+  export function wrap<T>(fn: Parallelizable<T>): Parallelizable<T> {
+    let invocation!: Parallelizable<T>;
+    (async () => {
+      try {
+        const result = fn();
+        invocation = async () => await result;
+        await result;
+      } catch (e) {
+        invocation = () => {
+          throw e;
+        };
+      }
+    })();
+    return invocation;
+  }
+}
 
-    get rejected(): Rejection[] {
-      return result.filter(p => !p.fulfilled) as Rejection[];
-    },
+export class ParallelResult<T> {
+  private readonly result!: (Fulfillment<T>|Rejection)[];
+  constructor(result: (Fulfillment<T>|Rejection)[]) {
+    this.result = result;
+  }
 
-    get allFulfilled(): boolean {
-      return result.every(p => p.fulfilled);
-    },
+  public get items() {
+    return this.result.slice(0) as (Fulfillment<T>|Rejection)[];
+  }
 
-    get allRejected(): boolean {
-      return result.every(p => !p.fulfilled);
-    },
+  public get fulfilled(): Fulfillment<T>[] {
+    return this.result.filter(p => p.fulfilled) as Fulfillment<T>[];
+  }
 
-    get anyFulfilled(): boolean {
-      return !this.allRejected;
-    },
+  public get rejected(): Rejection[] {
+    return this.result.filter(p => !p.fulfilled) as Rejection[];
+  }
 
-    get anyRejected(): boolean {
-      return !this.allFulfilled;
-    },
+  public get allFulfilled(): boolean {
+    return this.result.every(p => p.fulfilled);
+  }
 
-    get someFulfilled(): boolean {
-      return !(this.allFulfilled || this.allRejected);
-    }
-  };
+  public get allRejected(): boolean {
+    return this.result.every(p => !p.fulfilled);
+  }
+
+  public get anyFulfilled(): boolean {
+    return !this.allRejected;
+  }
+
+  public get anyRejected(): boolean {
+    return !this.allFulfilled;
+  }
+
+  public get someFulfilled(): boolean {
+    return !(this.allFulfilled || this.allRejected);
+  }
 }

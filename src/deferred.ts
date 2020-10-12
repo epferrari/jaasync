@@ -13,7 +13,10 @@ export class Deferred<T> {
 }
 
 export function deferred<T>(): Deferred<T> {
-  let resolve, reject, resolved = false, rejected = false, pending = true;
+  let resolve!: (value: T) => void;
+  let reject!: (error: any) => void;
+  // tslint:disable-next-line
+  let resolved = false, rejected = false, pending = true;
   const p = new Promise((_resolve, _reject) => {
     resolve = (value: T) => {
       if(pending) {

@@ -1,5 +1,4 @@
-import {CancelablePromise, DefaultCanceledRejectMsg} from './cancelable';
-import {sleep} from './sleep';
+import {CancelablePromise, DefaultCanceledRejectMsg, sleep} from './cancelable';
 
 describe('sleep', () => {
   let p: CancelablePromise<any>;

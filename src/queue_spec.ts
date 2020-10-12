@@ -1,6 +1,6 @@
-import {TransactionQueue} from './queue';
+import {sleep} from './cancelable';
 import {Deferred} from './deferred';
-import {sleep} from './sleep';
+import {TransactionQueue} from './queue';
 
 describe('TransactionQueue', () => {
   let spy1: jasmine.Spy;
