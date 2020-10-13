@@ -11,7 +11,7 @@
     "test": "npm run dev && ./node_modules/.bin/jasmine lib/*_spec.js",
     "validate": "npm run test && npm run lint",
     "install": "([ -d ./src ] && [ ! -d ./lib ] && mkdir lib && npm install . &&  npm run dist) || echo ''",
-    "prepare": "npm run dist",
+    "prepublish": "rm -rf ./lib && npm run dist",
     "version": "git add -A src",
     "postversion": "git push && git push --tags"
   },
