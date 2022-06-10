@@ -1,12 +1,12 @@
-import {sleep} from './cancelable';
-import {Deferred} from './deferred';
-import {TransactionQueue} from './queue';
+import {Deferred, deferred} from './deferred';
+import {AsyncQueue} from './queue';
+import {sleep} from './sleep';
 
-describe('TransactionQueue', () => {
-  let spy1: jasmine.Spy;
-  let spy2: jasmine.Spy;
-  let spy3: jasmine.Spy;
-  let spy4: jasmine.Spy;
+describe('AsyncQueue', () => {
+  let spy1: jasmine.Spy<any>;
+  let spy2: jasmine.Spy<any>;
+  let spy3: jasmine.Spy<any>;
+  let spy4: jasmine.Spy<any>;
 
   let deferred1: Deferred<any>;
   let deferred2: Deferred<any>;
@@ -17,7 +17,7 @@ describe('TransactionQueue', () => {
   let operation3: () => Promise<void>;
   let operation4: () => Promise<void>;
 
-  let queue: TransactionQueue;
+  let queue: AsyncQueue;
 
   beforeEach(() => {
     spy1 = jasmine.createSpy('spy1');
@@ -25,9 +25,9 @@ describe('TransactionQueue', () => {
     spy3 = jasmine.createSpy('spy3');
     spy4 = jasmine.createSpy('spy4');
 
-    deferred1 = new Deferred<void>();
-    deferred2 = new Deferred<void>();
-    deferred3 = new Deferred<void>();
+    deferred1 = deferred<void>();
+    deferred2 = deferred<void>();
+    deferred3 = deferred<void>();
 
     operation1 = async (): Promise<void> => {
       spy1();
@@ -49,17 +49,17 @@ describe('TransactionQueue', () => {
       return;
     };
 
-    queue = new TransactionQueue();
+    queue = new AsyncQueue();
   });
 
-  describe('given operations await values that resolve in the same order the operations were transacted', () => {
+  describe('given operations await values that resolve in the same order the operations were invoked', () => {
     it('executes async operations in serial', async () => {
-      const {transaction} = queue;
+      const {enqueue} = queue;
 
-      transaction(operation1);
-      transaction(operation2);
-      transaction(operation3);
-      transaction(operation4);
+      enqueue(operation1);
+      enqueue(operation2);
+      enqueue(operation3);
+      enqueue(operation4);
 
       await sleep(0);
       expect(spy1).toHaveBeenCalled();
@@ -84,14 +84,14 @@ describe('TransactionQueue', () => {
     });
   });
 
-  describe('given operations await values that resolve in an order diffently than the opertions were transacted', () => {
+  describe('given operations await values that resolve in an order diffently than the opertions were invoked', () => {
     it('executes async operations in serial', async () => {
-      const {transaction} = queue;
+      const {enqueue} = queue;
 
-      transaction(operation1);
-      transaction(operation2);
-      transaction(operation3);
-      transaction(operation4);
+      enqueue(operation1);
+      enqueue(operation2);
+      enqueue(operation3);
+      enqueue(operation4);
 
       await sleep(0);
       expect(spy1).toHaveBeenCalled();
@@ -119,15 +119,15 @@ describe('TransactionQueue', () => {
     });
   });
 
-  describe('given a transaction is started from inside another transaction', () => {
+  describe('given an operation is started from inside another operation', () => {
     describe('and given a single layer of nesting', () => {
-      it('passes a child trasaction scope to each operation', async () => {
+      it('passes a child enqueue function to each operation', async () => {
 
-        const {transaction} = queue;
+        const {enqueue} = queue;
 
-        transaction(operation1);
-        transaction(childTransaction => childTransaction(operation2));
-        transaction(operation3);
+        enqueue(operation1);
+        enqueue(child => child(operation2));
+        enqueue(operation3);
 
         await sleep(0);
         expect(spy1).toHaveBeenCalled();
@@ -139,19 +139,19 @@ describe('TransactionQueue', () => {
     });
 
     describe('given complex nesting', () => {
-      it('resolves complex nesting correctly via child transaction scopes', async () => {
-        const {transaction} = queue;
+      it('resolves complex nesting correctly via child scopes', async () => {
+        const {enqueue} = queue;
 
-        transaction(operation1);
-        transaction(async childTransaction => {
-          await childTransaction(async childTransaction2 => {
+        enqueue(operation1);
+        enqueue(async child1 => {
+          await child1(async child2 => {
             await operation2();
-            await childTransaction2(async childTransaction3 => {
-              await childTransaction3(operation3);
+            await child2(async child3 => {
+              await child3(operation3);
             });
           });
         });
-        transaction(operation4);
+        enqueue(operation4);
 
         await sleep(0);
         expect(spy1).toHaveBeenCalled();
@@ -173,17 +173,17 @@ describe('TransactionQueue', () => {
       });
     });
 
-    describe('given the nested transaction cannot access the child transaction scope', () => {
+    describe('given the nested enqueue cannot access the child scope', () => {
       it('handles a simple case', async () => {
-        const {transaction} = queue;
+        const {enqueue} = queue;
 
-        const wrappedTransaction = async() => {
-          await transaction(operation2);
+        const wrappedEnqueue = async() => {
+          await enqueue(operation2);
         };
 
-        transaction(operation1);
-        transaction(wrappedTransaction);
-        transaction(operation3);
+        enqueue(operation1);
+        enqueue(wrappedEnqueue);
+        enqueue(operation3);
 
         await sleep(0);
         expect(spy1).toHaveBeenCalled();
@@ -199,20 +199,20 @@ describe('TransactionQueue', () => {
       });
 
       describe('given a complex case', () => {
-        it('exceeds the intelligence of the TransactionQueue', async () => {
-          const {transaction} = queue;
+        it('does not exceed the intelligence of the AsyncQueue', async () => {
+          const {enqueue: enqueue} = queue;
 
-          const wrappedTransaction = async() => {
-            await transaction(operation2);
+          const wrappedEnqueue = async() => {
+            await enqueue(operation2);
           };
 
-          const doubleWrappedTransaction = async() => {
-            await transaction(wrappedTransaction);
+          const doubleWrapped = async() => {
+            await enqueue(wrappedEnqueue);
           };
 
-          transaction(operation1);
-          transaction(doubleWrappedTransaction);
-          transaction(operation3);
+          enqueue(operation1);
+          enqueue(doubleWrapped);
+          enqueue(operation3);
 
           await sleep(0);
           expect(spy1).toHaveBeenCalled();
@@ -220,11 +220,11 @@ describe('TransactionQueue', () => {
           expect(spy3).not.toHaveBeenCalled();
           await deferred1.resolve();
           await sleep(0);
-          expect(spy2).not.toHaveBeenCalled(); // !!
+          expect(spy2).toHaveBeenCalled();
           expect(spy3).not.toHaveBeenCalled();
           await deferred2.resolve();
           await sleep(0);
-          expect(spy3).not.toHaveBeenCalled(); // !!
+          expect(spy3).toHaveBeenCalled();
         });
       });
     });

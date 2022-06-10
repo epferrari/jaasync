@@ -1,26 +1,11 @@
-import {CancelablePromise, cancelable} from './cancelable';
-import {deferred, Deferred} from './deferred';
-import {FungiblePromise, fungible} from './fungible';
-import {parallel, ParallelResult} from './parallel';
-import {retry} from './retry';
-import {safe} from './safe';
-import {sleep} from './sleep';
-import {timeout, TimeoutExpiredError} from './timeout';
-import {isPromise} from './utils/isPromise';
-
-export {
-  deferred, // factory
-  Deferred, // class + interface
-  retry,
-  sleep,
-  cancelable, // factory
-  CancelablePromise, // class + interface
-  parallel,
-  ParallelResult,
-  safe,
-  fungible, // factory
-  FungiblePromise, // class + interface
-  timeout,
-  TimeoutExpiredError,
-  isPromise
-};
+export {asyncDedupe} from './asyncDedupe';
+export {AsyncQueue} from './queue';
+export {Awaitable} from './awaitable';
+export {CancelablePromise} from './cancelablePromise';
+export {FungiblePromise /* class */, fungible /* factory */} from './fungible';
+export {isPromise} from './utils/isPromise';
+export {parallel, ParallelResult} from './parallel';
+export {retry, cancelable} from './retry';
+export {safe} from './safe';
+export {sleep} from './sleep';
+export {timeout, TimeoutExpiredError} from './timeout';

@@ -1,7 +1,6 @@
-import {sleep} from './cancelable';
 import {deferred} from './deferred';
+import {sleep} from './sleep';
 import {timeout, TimeoutExpiredError} from './timeout';
-
 
 describe('timeout', () => {
   describe('given the timeout ms expires before the promise is resolved', () => {
@@ -26,7 +25,7 @@ describe('timeout', () => {
         expect(result).toEqual('success');
         done();
       })
-      .catch(done.fail);
+        .catch(done.fail);
 
       promise.resolve('success');
     });
@@ -38,10 +37,10 @@ describe('timeout', () => {
       const t = timeout(promise, 50);
 
       t.then(done.fail)
-      .catch(e => {
-        expect(e).toEqual('error');
-        done();
-      });
+        .catch(e => {
+          expect(e).toEqual('error');
+          done();
+        });
 
       promise.reject('error');
     });
