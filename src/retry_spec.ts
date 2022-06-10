@@ -3,8 +3,8 @@ import {retry} from './retry';
 import {sleep} from './sleep';
 
 describe('retry', () => {
-  let createTask,
-    task;
+  let createTask: (failuresBeforeSuccess: number, taskTime?: number) => () => Promise<any>;
+  let task: jasmine.Spy<any>;
   const decay = 1,
     retryInterval = 100; // consistent 1/10 second between task invocations;
 

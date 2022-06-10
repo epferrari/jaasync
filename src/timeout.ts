@@ -13,8 +13,8 @@ export function timeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   let pending: boolean = true;
   return new Promise<T>(async (resolve, reject) => {
     // eslint-disable-next-line prefer-const
-    let cleanup;
-    let t = setTimeout(() => {
+    let cleanup: () => void;
+    let t: any = setTimeout(() => {
       if(pending) {
         pending = false;
         reject(new TimeoutExpiredError(ms));

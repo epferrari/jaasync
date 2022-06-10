@@ -7,7 +7,7 @@ describe('parallel', () => {
     t1: Deferred<string>,
     t2: Deferred<string>,
     t3: Deferred<string>,
-    spy,
+    spy: jasmine.Spy<any>,
     result: ParallelResult<any>;
 
   describe('given an array of promises', () => {

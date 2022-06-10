@@ -10,8 +10,7 @@
     "baseUrl": ".",
     "outDir": "./lib",
     "declaration": true,
-    "strictNullChecks": true,
-    "strictPropertyInitialization": true
+    "strictNullChecks": false
   },
   "compileOnSave": false,
   "include": [

@@ -1,21 +1,21 @@
-import {deferred} from './deferred';
+import {Deferred, deferred} from './deferred';
 import {AsyncQueue} from './queue';
 import {sleep} from './sleep';
 
 describe('AsyncQueue', () => {
-  let spy1;
-  let spy2;
-  let spy3;
-  let spy4;
+  let spy1: jasmine.Spy<any>;
+  let spy2: jasmine.Spy<any>;
+  let spy3: jasmine.Spy<any>;
+  let spy4: jasmine.Spy<any>;
 
-  let deferred1;
-  let deferred2;
-  let deferred3;
+  let deferred1: Deferred<any>;
+  let deferred2: Deferred<any>;
+  let deferred3: Deferred<any>;
 
-  let operation1;
-  let operation2;
-  let operation3;
-  let operation4;
+  let operation1: () => Promise<void>;
+  let operation2: () => Promise<void>;
+  let operation3: () => Promise<void>;
+  let operation4: () => Promise<void>;
 
   let queue: AsyncQueue;
 

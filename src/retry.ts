@@ -1,5 +1,4 @@
-import {isNil} from 'lodash';
-
+import {isNil} from './utils/isNil';
 import {CancelablePromise, Canceller, DefaultCanceledRejectMsg} from './cancelablePromise';
 import {sleep} from './sleep';
 
