@@ -3,12 +3,12 @@ import {parallel, ParallelResult} from './parallel';
 import {sleep} from './sleep';
 
 describe('parallel', () => {
-  let p,
-    t1: Deferred<string>,
-    t2: Deferred<string>,
-    t3: Deferred<string>,
-    spy: jasmine.Spy<any>,
-    result: ParallelResult<any>;
+  let p;
+  let t1: Deferred<string>;
+  let t2: Deferred<string>;
+  let t3: Deferred<string>;
+  let spy: jasmine.Spy<any>;
+  let result: ParallelResult<any>;
 
   describe('given an array of promises', () => {
     beforeEach(() => {

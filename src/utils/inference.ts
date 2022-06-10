@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-constraint
 export type Invocable<TParams extends any[] = any[], TReturnType extends any = any> = (...params: TParams) => TReturnType;
 export type InferParams<TFn extends Invocable<any, any>> = TFn extends Invocable<infer P, any> ? P : never;
 export type Unpromisify<TValue> = TValue extends Promise<infer V> ? V : TValue;

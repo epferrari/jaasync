@@ -18,15 +18,15 @@ describe('sleep', () => {
     });
 
     it('resolves after time', async () => {
-      // Setup promises
+      // setup promises
       let resolved = false;
-      const promise = sleep(25);
+      const promise: Promise<void> = sleep(25);
       promise.then(() => resolved = true);
 
-      // At first, promise has not run
+      // at first, promise has not run
       expect(resolved).toEqual(false);
 
-      // After sleep has finished, promise runs
+      // after sleep has finished, promise runs
       jasmine.clock().tick(50);
       await promise;
       expect(resolved).toEqual(true);

@@ -260,7 +260,7 @@ describe('asyncDedupe', () => {
             deduped(3, {foo: 'quo'}, new Error('5'))
           ]);
         } catch(e) {
-          expect(e.message).toEqual('5');
+          expect((e as Error).message).toEqual('5');
         }
       });
     });

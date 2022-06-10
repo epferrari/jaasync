@@ -1,5 +1,5 @@
 export class TimeoutExpiredError extends Error {
-  constructor(ms: number) {
+  public constructor(ms: number) {
     super(`Timeout expired after ${ms} milliseconds`);
   }
 
@@ -10,11 +10,12 @@ export class TimeoutExpiredError extends Error {
 }
 
 export function timeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  let pending: boolean = true;
+  let pending = true;
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   return new Promise<T>(async (resolve, reject) => {
     // eslint-disable-next-line prefer-const
     let cleanup: () => void;
-    let t: any = setTimeout(() => {
+    let t: NodeJS.Timeout = setTimeout(() => {
       if(pending) {
         pending = false;
         reject(new TimeoutExpiredError(ms));

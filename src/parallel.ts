@@ -1,14 +1,12 @@
 import {isPromise} from './utils/isPromise';
 
 /* eslint-disable @typescript-eslint/no-invalid-this */
-type ResolutionStatus = {fulfilled: boolean};
-type Fulfillment<T> = ResolutionStatus & {value: T, error: null, index: number};
-type Rejection = ResolutionStatus & {error: Error, value: null, index: number};
+
 
 export interface ParallelResult<T> {
-  items: (Fulfillment<T>|Rejection)[];
-  fulfilled: Fulfillment<T>[];
-  rejected: Rejection[];
+  items: (parallel.Fulfillment<T>|parallel.Rejection)[];
+  fulfilled: parallel.Fulfillment<T>[];
+  rejected: parallel.Rejection[];
   allFulfilled: boolean;
   allRejected: boolean;
   anyFulfilled: boolean;
@@ -42,22 +40,22 @@ export async function parallel<T>(promises: (parallel.Parallelizable<T>|Promise<
   const result = await Promise.all(wrapper);
 
   return {
-    get items(): (Fulfillment<T>|Rejection)[] {
+    get items(): (parallel.Fulfillment<T>|parallel.Rejection)[] {
       return result
         .slice(0)
-        .sort((a, b) => a.index - b.index) as (Fulfillment<T>|Rejection)[];
+        .sort((a, b) => a.index - b.index) as (parallel.Fulfillment<T>|parallel.Rejection)[];
     },
 
-    get fulfilled(): Fulfillment<T>[] {
+    get fulfilled(): parallel.Fulfillment<T>[] {
       return result
         .filter(p => p.fulfilled)
-        .sort((a, b) => a.index - b.index) as Fulfillment<T>[];
+        .sort((a, b) => a.index - b.index) as parallel.Fulfillment<T>[];
     },
 
-    get rejected(): Rejection[] {
+    get rejected(): parallel.Rejection[] {
       return result
         .filter(p => !p.fulfilled)
-        .sort((a, b) => a.index - b.index) as Rejection[];
+        .sort((a, b) => a.index - b.index) as parallel.Rejection[];
     },
 
     get allFulfilled(): boolean {
@@ -82,12 +80,11 @@ export async function parallel<T>(promises: (parallel.Parallelizable<T>|Promise<
   };
 }
 
-type _Rejection = Rejection;
-type _Fulfillment<T> = Fulfillment<T>;
 export namespace parallel {
   export type Parallelizable<T> = () => Promise<T>|T;
-  export type Fulfillment<T> = _Fulfillment<T>;
-  export type Rejection = _Rejection;
+  export type ResolutionStatus = {fulfilled: boolean};
+  export type Fulfillment<T> = ResolutionStatus & {value: T, error: null, index: number};
+  export type Rejection = ResolutionStatus & {error: Error, value: null, index: number};
   // this oddity is because in node, an immediately invoked async function
   // that results in rejected promise, even though caught in parallel, is still being
   // treated as an unhandled rejection

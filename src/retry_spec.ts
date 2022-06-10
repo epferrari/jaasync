@@ -5,8 +5,8 @@ import {sleep} from './sleep';
 describe('retry', () => {
   let createTask: (failuresBeforeSuccess: number, taskTime?: number) => () => Promise<any>;
   let task: jasmine.Spy<any>;
-  const decay = 1,
-    retryInterval = 100; // consistent 1/10 second between task invocations;
+  const decay = 1;
+  const retryInterval = 100; // consistent 1/10 second between task invocations;
 
   beforeEach(() => {
     task = jasmine.createSpy('task');
@@ -63,7 +63,7 @@ describe('retry', () => {
           retryInterval
         })
           .then(done.fail)
-          .catch(e => {
+          .catch(() => {
             expect(task).toHaveBeenCalledTimes(2);
             done();
           });
@@ -136,7 +136,7 @@ describe('retry', () => {
       it('the cancellation has no effect', done => {
         const r = retry<string>(createTask(0));
 
-        r.catch(e => {
+        r.catch((e) => {
           done.fail(e);
         });
 
@@ -193,7 +193,9 @@ describe('retry', () => {
         maxRetryAttempts: 10,
         decay: 2
       });
-    } catch {}
+    } catch {
+      /* ignore */
+    }
 
     for(let i = 0; i <= 10; i++) {
       expect(fn).toHaveBeenCalledWith({
@@ -210,6 +212,7 @@ describe('retry', () => {
   describe('onError', () => {
     it('invokes onError on failure', async () => {
       const error = new Error('Error');
+      // eslint-disable-next-line @typescript-eslint/require-await
       const fn = async () => {
         throw error;
       };
@@ -222,9 +225,11 @@ describe('retry', () => {
           maxRetryAttempts: 2,
           onError: logError
         });
-      } catch(final) {}
+      } catch(final) {
+        /* ignore */
+      }
 
-      // Verify parameters
+      // verify parameters
       expect(logError).toHaveBeenCalledWith(error, {
         state: jasmine.any(Function),
         attemptNumber: 1,
@@ -234,7 +239,7 @@ describe('retry', () => {
         next: jasmine.any(Function)
       });
 
-      // Verify that onError is called on each failure
+      // verify that onError is called on each failure
       expect(logError).toHaveBeenCalledTimes(3);
     });
   });

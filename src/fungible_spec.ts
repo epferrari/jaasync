@@ -19,23 +19,21 @@ describe('fungible', () => {
 
         const f = fungible<string>(p1);
         // make sure FungiblePromise works with async await, since it implements Promise but does not exetend it
-        (async () => {
-          onResolve(await f);
-        })();
+        f.then(onResolve);
 
-        // Using p2 promise. When p1 resolves, fungible does not
+        // using p2 promise. When p1 resolves, fungible does not
         f.swap(p2);
         p1.resolve('foo');
         await sleep(0);
         expect(onResolve).not.toHaveBeenCalled();
 
-        // Using p3 promise. When p2 resolves, fungible does not
+        // using p3 promise. When p2 resolves, fungible does not
         f.swap(p3);
         p2.resolve('bar');
         await sleep(0);
         expect(onResolve).not.toHaveBeenCalled();
 
-        // When p3 resolves, fungible resolves
+        // when p3 resolves, fungible resolves
         p3.resolve('baz');
         await sleep(0);
         expect(onResolve).toHaveBeenCalledWith('baz');

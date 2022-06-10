@@ -12,10 +12,10 @@ describe('deferred', () => {
       const callback = jasmine.createSpy('then');
       promise.then(callback);
 
-      // Not invoked till resolved
+      // not invoked till resolved
       expect(callback).not.toHaveBeenCalled();
 
-      // Once resolved, then is invoked
+      // once resolved, then is invoked
       promise.resolve();
       await promise;
       expect(callback).toHaveBeenCalled();
@@ -25,10 +25,10 @@ describe('deferred', () => {
       const callback = jasmine.createSpy('finally');
       promise.finally(callback);
 
-      // Not invoked till resolved
+      // not invoked till resolved
       expect(callback).not.toHaveBeenCalled();
 
-      // Once resolved, then is invoked
+      // once resolved, then is invoked
       promise.resolve();
       await promise;
       expect(callback).toHaveBeenCalled();
@@ -40,10 +40,10 @@ describe('deferred', () => {
       const callback = jasmine.createSpy('catch');
       promise.catch(callback);
 
-      // Not invoked till resolved
+      // not invoked till resolved
       expect(callback).not.toHaveBeenCalled();
 
-      // Once rejected, then is invoked
+      // once rejected, then is invoked
       promise.reject();
       try {
         await promise;
@@ -52,16 +52,16 @@ describe('deferred', () => {
       }
     });
 
-    // Skipped because Node.JS inexplicably errors after test has passed
-    // This only happens when Promise.finally() is called, even on native Promises
+    // skipped because Node.JS inexplicably errors after test has passed
+    // this only happens when Promise.finally() is called, even on native Promises
     xit('invokes finally', async () => {
       const callback = jasmine.createSpy('finally');
       promise.finally(callback);
 
-      // Not invoked till resolved
+      // not invoked till resolved
       expect(callback).not.toHaveBeenCalled();
 
-      // Once rejected, then is invoked
+      // once rejected, then is invoked
       promise.reject();
       try {
         await promise;
