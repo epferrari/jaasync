@@ -1,17 +1,22 @@
-import {retry, CancelablePromise} from './cancelable';
+import {DefaultCanceledRejectMsg} from './cancelablePromise';
+import {retry} from './retry';
+import {sleep} from './sleep';
 
 describe('retry', () => {
-  let createTask: (n: number) => () => Promise<any>;
-  let task: jasmine.Spy;
-  const decay = 1;
-  const retryInterval = 100; // consistent 1/10 second between task invocations;
+  let createTask,
+    task;
+  const decay = 1,
+    retryInterval = 100; // consistent 1/10 second between task invocations;
 
   beforeEach(() => {
     task = jasmine.createSpy('task');
-    createTask = (failuresBeforeSuccess) => {
+    createTask = (failuresBeforeSuccess: number, taskTime?: number) => {
       let count = 0;
-      return (() => {
+      return (async() => {
         task();
+        if(taskTime) {
+          await sleep(taskTime);
+        }
         if (count++ >= failuresBeforeSuccess) {
           return Promise.resolve('success');
         } else {
@@ -106,22 +111,29 @@ describe('retry', () => {
         }, 490);
       });
 
-      it('immediately rejects with `Canceled` error', done => {
-        const r = retry<string>(createTask(10));
-
-        r.then(done.fail).catch(e => {
-          expect(e).toEqual(CancelablePromise.DEFAULT_REJECTION_MESSAGE);
-          done();
+      it('immediately rejects with `Canceled` error', async () => {
+        // task will take 100 ms
+        // we will cancel it while it is running
+        // and expect to get a rejection
+        const r = retry<string>(createTask(1, 100));
+        const spy = jasmine.createSpy('catcher');
+        r.catch(e => {
+          spy();
+          expect(e).toEqual(DefaultCanceledRejectMsg);
         });
 
         setTimeout(() => {
           r.cancel();
-        }, 10);
+        }, 5);
+
+        await sleep(10);
+
+        expect(spy).toHaveBeenCalled();
       });
     });
 
     describe('and given it was already fulfilled', () => {
-      it('the cancelation has no effect', done => {
+      it('the cancellation has no effect', done => {
         const r = retry<string>(createTask(0));
 
         r.catch(e => {
@@ -136,7 +148,7 @@ describe('retry', () => {
     });
 
     describe('and given it was already rejected', () => {
-      it('the cancelation has no effect', done => {
+      it('the cancellation has no effect', done => {
         const r = retry<string>(createTask(2), {
           maxRetryAttempts: 0,
           decay,
@@ -152,6 +164,78 @@ describe('retry', () => {
           done();
         }, 100);
       });
+    });
+  });
+
+  it('it handles synchronously thrown errors', (done) => {
+    const promise = retry(() => {
+      throw new Error('test');
+    }, {
+      maxRetryAttempts: 2
+    });
+
+    const resolve = jasmine.createSpy('resolve');
+    const reject = jasmine.createSpy('reject');
+
+    promise.then(resolve).catch(reject).finally(() => {
+      expect(resolve).not.toHaveBeenCalled();
+      expect(reject).toHaveBeenCalled();
+      done();
+    });
+  });
+
+  it('passes retry info to the task', async () => {
+    const fn = jasmine.createSpy('test');
+    fn.and.throwError('Test');
+    try {
+      await retry(fn, {
+        retryInterval: 1,
+        maxRetryAttempts: 10,
+        decay: 2
+      });
+    } catch {}
+
+    for(let i = 0; i <= 10; i++) {
+      expect(fn).toHaveBeenCalledWith({
+        state: jasmine.any(Function),
+        attemptNumber: i + 1,
+        attemptsRemaining: 10 - i,
+        msUntilNextAttempt: Math.pow(2, i),
+        cancel: jasmine.any(Function),
+        next: jasmine.any(Function)
+      });
+    }
+  });
+
+  describe('onError', () => {
+    it('invokes onError on failure', async () => {
+      const error = new Error('Error');
+      const fn = async () => {
+        throw error;
+      };
+      const logError = jasmine.createSpy('log');
+
+      try {
+        await retry(fn, {
+          retryInterval: 1,
+          decay: 2,
+          maxRetryAttempts: 2,
+          onError: logError
+        });
+      } catch(final) {}
+
+      // Verify parameters
+      expect(logError).toHaveBeenCalledWith(error, {
+        state: jasmine.any(Function),
+        attemptNumber: 1,
+        attemptsRemaining: 2,
+        msUntilNextAttempt: 1,
+        cancel: jasmine.any(Function),
+        next: jasmine.any(Function)
+      });
+
+      // Verify that onError is called on each failure
+      expect(logError).toHaveBeenCalledTimes(3);
     });
   });
 });

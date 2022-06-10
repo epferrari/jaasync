@@ -1,17 +1,24 @@
+import {last} from 'lodash';
 
+import {InferParams, Invocable, ReturnType} from './utils/inference';
 
-import {sleep} from './cancelable';
 import {Deferred, deferred} from './deferred';
 import {parallel} from './parallel';
-import {InferParams, Invocable, ReturnType} from './utils/inference';
-import {last} from './utils/last';
-
+import {sleep} from './sleep';
 
 export namespace asyncDedupe {
 
-  export type CollapseStrategy<T> = (prev: T, next: T) => boolean;
-  export type DedupeStrategy<T> = (prev: T, next: T) => boolean;
-  export type SortStrategy<T> = (prev: T, next: T) => -1|0|1;
+  export interface CollapseStrategy<T> {
+    (prev: T, next: T): boolean;
+  }
+
+  export interface DedupeStrategy<T> {
+    (prev: T, next: T): boolean;
+  }
+
+  export interface SortStrategy<T> {
+    (prev: T, next: T): -1|0|1;
+  }
 
   export interface Config<TFn extends Invocable> {
     interval: number;
@@ -25,7 +32,7 @@ export namespace asyncDedupe {
   }
 }
 
-export function asyncDedupe<TFn extends Invocable> (
+export function asyncDedupe<TFn extends Invocable>(
   fn: TFn,
   config: asyncDedupe.Config<TFn>
 ): (...params: InferParams<TFn>) => Promise<ReturnType<TFn>[]> {

@@ -1,4 +1,5 @@
-import {CancelablePromise, sleep} from './cancelable';
+import {CancelablePromise, DefaultCanceledRejectMsg} from './cancelablePromise';
+import {sleep} from './sleep';
 
 describe('sleep', () => {
   let p: CancelablePromise<any>;
@@ -6,10 +7,36 @@ describe('sleep', () => {
     p = sleep(25);
   });
 
+  describe('sleep', () => {
+    beforeEach(() => {
+      jasmine.clock().install();
+      jasmine.clock().mockDate();
+    });
+
+    afterEach(() => {
+      jasmine.clock().uninstall();
+    });
+
+    it('resolves after time', async () => {
+      // Setup promises
+      let resolved = false;
+      const promise = sleep(25);
+      promise.then(() => resolved = true);
+
+      // At first, promise has not run
+      expect(resolved).toEqual(false);
+
+      // After sleep has finished, promise runs
+      jasmine.clock().tick(50);
+      await promise;
+      expect(resolved).toEqual(true);
+    });
+  });
+
   describe('given the delay period has not elapsed', () => {
     it('the promise can be canceled', done => {
       p.then(done.fail.bind(done)).catch(e => {
-        expect(e).toEqual(CancelablePromise.DEFAULT_REJECTION_MESSAGE);
+        expect(e).toEqual(DefaultCanceledRejectMsg);
         done();
       });
 

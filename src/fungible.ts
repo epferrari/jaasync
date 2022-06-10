@@ -2,12 +2,14 @@ import {autobind} from 'core-decorators';
 
 import {isPromise} from './utils/isPromise';
 
-export type Swappable<T> = (wasCanceled: () => boolean) => Promise<T>;
+export interface Swappable<T> {
+  (wasCanceled: () => boolean): Promise<T>;
+}
 
-// legacy factory
 export function fungible<T>(target: Promise<T>|Swappable<T>): FungiblePromise<T> {
   return new FungiblePromise(target);
 }
+
 
 @autobind
 export class FungiblePromise<T> implements Promise<T> {
@@ -15,8 +17,8 @@ export class FungiblePromise<T> implements Promise<T> {
 
   private _i: number = 0;
   private _pending: boolean = true;
-  private _resolve!: (value: T) => void;
-  private _reject!: (error: any) => void;
+  private _resolve: (value: T) => void;
+  private _reject: (error: any) => void;
   private readonly _promise: Promise<T>;
 
   constructor(promise: Promise<T>|Swappable<T>) {

@@ -1,23 +1,22 @@
-import {sleep} from './cancelable';
-import {Deferred} from './deferred';
-import {ParallelResult, parallel} from './parallel';
+import {deferred, Deferred} from './deferred';
+import {parallel, ParallelResult} from './parallel';
+import {sleep} from './sleep';
 
 describe('parallel', () => {
-  // tslint:disable-next-line
   let p,
     t1: Deferred<string>,
     t2: Deferred<string>,
     t3: Deferred<string>,
-    spy: jasmine.Spy,
+    spy,
     result: ParallelResult<any>;
 
   describe('given an array of promises', () => {
     beforeEach(() => {
       spy = jasmine.createSpy('spy');
       p = parallel([
-        t1 = new Deferred<string>(),
-        t2 = new Deferred<string>(),
-        t3 = new Deferred<string>()
+        t1 = deferred<string>(),
+        t2 = deferred<string>(),
+        t3 = deferred<string>()
       ]);
       p.then(r => {
         result = r;

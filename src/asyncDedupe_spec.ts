@@ -1,5 +1,5 @@
 import {asyncDedupe} from './asyncDedupe';
-import {sleep} from './cancelable';
+import {sleep} from './sleep';
 
 
 type TestType = {

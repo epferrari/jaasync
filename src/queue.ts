@@ -1,84 +1,96 @@
 import {autobind} from 'core-decorators';
+
 import {Deferred, deferred} from './deferred';
 
-type TransactionId = string;
-type Operation<T> = (childTransaction: TransactionQueue['transaction']) => Promise<T>|T;
-type QueuedOperation<T> = {
+type Operation<T> = (childEnqueue: AsyncQueue['enqueue']) => Promise<T>|T;
+
+type AsyncQueueNode<T> = {
+  entry: AsyncQueueEntry<T>;
+  next: AsyncQueueNode<any>;
+};
+type AsyncQueueEntry<T> = {
   operation: Operation<T>;
-  resolver: Deferred<void>;
-  childScope: TransactionQueue;
+  promise: Deferred<T>;
+  childScope: AsyncQueue;
 };
 
 @autobind
-export class TransactionQueue {
-  private queue: Map<string, QueuedOperation<any>> = new Map<string, QueuedOperation<any>>();
-  private position: number = 0;
-  private currentScope: TransactionId|null = null;
+export class AsyncQueue {
   protected depth: number = 0;
+  protected name: string;
+  private _size: number = 0;
+  private head: AsyncQueueNode<any>;
+  private tail: AsyncQueueNode<any>;
+  private running: boolean;
+  private currentScope: AsyncQueue;
 
-  public async transaction<T>(operation: Operation<T>): Promise<T> {
+  constructor(name?: string) {
+    this.name = name || 'AsyncQueue';
+  }
+
+  public async enqueue<T>(operation: Operation<T>): Promise<T> {
     if(this.currentScope) {
-      const item = this.queue.get(this.currentScope) as QueuedOperation<T>;
-      return item.childScope.transaction(operation);
+      return this.currentScope.enqueue(operation);
     }
-    const transactionId: TransactionId = this.createTransactionId();
-    const ready = this.awaitQueuePosition();
-    this.queueOperation(transactionId, operation);
-    await ready;
-
-    try {
-      const result: T = await this.executeOperation<T>(transactionId);
-      this.closeTransaction(transactionId);
-      return result;
-    } catch(e) {
-      this.closeTransaction(transactionId);
-      throw e;
-    }
-  }
-
-  private createTransactionId(): TransactionId {
-    const transactionId: TransactionId = this.position.toString();
-    this.position++;
-    return transactionId;
-  }
-
-  private async awaitQueuePosition(): Promise<void> {
-    if(this.queue.size === 0) {
-      return;
-    } else {
-      await Promise.all(Array.from(this.queue.values()).map(q => q.resolver));
-    }
-  }
-
-  private queueOperation<T>(transactionId: TransactionId, operation: Operation<T>): void {
-    const queuedOperation: QueuedOperation<T> = {
+    const entry: AsyncQueueEntry<T> = {
       operation,
-      resolver: deferred(),
-      childScope: new ChildTransactionQueue(this.depth + 1)
+      promise: deferred<T>(),
+      childScope: new ChildAsyncQueue(`${this.name}_${this.depth + 1}_${operation.name}`, this.depth + 1)
     };
-    this.queue.set(transactionId, queuedOperation);
+    this.add(entry);
+    this.processQueue();
+    return await entry.promise;
   }
 
-  private async executeOperation<T>(transactionId: TransactionId): Promise<T> {
-    const item = this.queue.get(transactionId) as QueuedOperation<T>;
-    const {operation, childScope} = item;
-    this.currentScope = transactionId;
-    const executedOperation = operation(childScope.transaction);
+  public get size(): number {
+    return this._size;
+  }
+
+  private add(entry: AsyncQueueEntry<any>): void {
+    const node: AsyncQueueNode<any> = {entry, next: null};
+    if(!this.head) {
+      this.head = this.tail = node;
+    } else {
+      const tail = this.tail;
+      tail.next = node;
+      this.tail = node;
+    }
+    this._size++;
+  }
+  private async processQueue(): Promise<void> {
+    if(this.running || !this.head) {
+      return;
+    }
+    this.running = true;
+    const current = this.head;
+    this.head = current.next;
+    const {promise} = current.entry;
+    try {
+      const result = await this.execute(current.entry);
+      promise.resolve(result);
+    } catch(e) {
+      promise.reject(e);
+    } finally {
+      this.running = false;
+      this._size--;
+      if(this._size) {
+        this.processQueue();
+      }
+    }
+  }
+
+  private async execute<T>(entry: AsyncQueueEntry<T>): Promise<T> {
+    const {operation, childScope} = entry;
+    this.currentScope = childScope;
+    const result = operation(childScope.enqueue);
     this.currentScope = null;
-    return await executedOperation;
-  }
-
-  private closeTransaction(transactionId: TransactionId) {
-    const item = this.queue.get(transactionId) as QueuedOperation<any>;
-    const {resolver} = item;
-    resolver.resolve();
-    this.queue.delete(transactionId);
+    return await result;
   }
 }
 
-class ChildTransactionQueue extends TransactionQueue {
-  constructor(depth: number) {
-    super();
+class ChildAsyncQueue extends AsyncQueue {
+  constructor(name: string, depth: number) {
+    super(name);
     this.depth = depth;
   }
 }
