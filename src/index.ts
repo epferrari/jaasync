@@ -2,7 +2,14 @@ export {asyncDedupe} from './asyncDedupe';
 export {AsyncQueue} from './queue';
 export {Awaitable} from './awaitable';
 export {CancelablePromise} from './cancelablePromise';
-export {FungiblePromise /* class */, fungible /* factory */} from './fungible';
+export {
+  Deferred /* class */,
+  deferred /* factory */
+} from './deferred';
+export {
+  FungiblePromise /* class */,
+  fungible /* factory */
+} from './fungible';
 export {isPromise} from './utils/isPromise';
 export {parallel, ParallelResult} from './parallel';
 export {retry, cancelable} from './retry';
