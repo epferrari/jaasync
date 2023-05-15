@@ -1,8 +1,10 @@
-import {Deferred, deferred} from './deferred';
-import {AsyncQueue} from './queue';
+import {testForMemoryLeak} from './testUtils/testMemLeak';
+
+import {deferred, Deferred} from './deferred';
+import {AsyncQueue, Enqueue} from './queue';
 import {sleep} from './sleep';
 
-describe('AsyncQueue', () => {
+fdescribe('AsyncQueue', () => {
   let spy1: jasmine.Spy<any>;
   let spy2: jasmine.Spy<any>;
   let spy3: jasmine.Spy<any>;
@@ -12,10 +14,10 @@ describe('AsyncQueue', () => {
   let deferred2: Deferred<any>;
   let deferred3: Deferred<any>;
 
-  let operation1: () => Promise<void>;
-  let operation2: () => Promise<void>;
-  let operation3: () => Promise<void>;
-  let operation4: () => Promise<void>;
+  let operation1: () => Promise<any>;
+  let operation2: () => Promise<any>;
+  let operation3: () => Promise<any>;
+  let operation4: () => Promise<any>;
 
   let queue: AsyncQueue;
 
@@ -177,7 +179,7 @@ describe('AsyncQueue', () => {
       it('handles a simple case', async () => {
         const {enqueue} = queue;
 
-        const wrappedEnqueue = async() => {
+        const wrappedEnqueue = async (enqueue: Enqueue<any>) => {
           await enqueue(operation2);
         };
 
@@ -200,13 +202,13 @@ describe('AsyncQueue', () => {
 
       describe('given a complex case', () => {
         it('does not exceed the intelligence of the AsyncQueue', async () => {
-          const {enqueue: enqueue} = queue;
+          const {enqueue} = queue;
 
-          const wrappedEnqueue = async() => {
+          const wrappedEnqueue = async (enqueue: Enqueue<any>) => {
             await enqueue(operation2);
           };
 
-          const doubleWrapped = async() => {
+          const doubleWrapped = async (enqueue: Enqueue<any>) => {
             await enqueue(wrappedEnqueue);
           };
 
@@ -227,6 +229,34 @@ describe('AsyncQueue', () => {
           expect(spy3).toHaveBeenCalled();
         });
       });
+    });
+  });
+
+  fdescribe('does not leak memory', () => {
+    it('when a flat queue is run', async () => {
+      const queue = new AsyncQueue();
+      const memtest = testForMemoryLeak(async () => {
+        let promises: Promise<void>[] = [];
+        for(let i = 0; i <= 100_000; i++) {
+          promises.push(queue.enqueue(async () => {}));
+        }
+        await Promise.all(promises);
+      });
+      await expectAsync(memtest).toBeResolved();
+    });
+
+    it('when a nested queue is run', async () => {
+      const queue = new AsyncQueue();
+      const memtest = testForMemoryLeak(async () => {
+        let promises: Promise<void>[] = [];
+        for(let i = 0; i <= 100_000; i++) {
+          promises.push(queue.enqueue(async (enqueue: Enqueue<any>) => (
+            enqueue(() => {})
+          )));
+        }
+        await Promise.all(promises);
+      });
+      await expectAsync(memtest).toBeResolved();
     });
   });
 });

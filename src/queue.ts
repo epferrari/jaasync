@@ -1,96 +1,81 @@
-import {autobind} from 'core-decorators';
+import {LinkedList} from './utils/linkedList';
 
-import {Deferred, deferred} from './deferred';
+export type Enqueue<T> = (operation: Operation<T>) => Promise<T>|T;
+type Operation<T> = (childEnqueue: Enqueue<T>) => Promise<T>|T;
 
-type Operation<T> = (childEnqueue: AsyncQueue['enqueue']) => Promise<T>|T;
-
-type AsyncQueueNode<T> = {
-  entry: AsyncQueueEntry<T>;
-  next: AsyncQueueNode<any>;
-};
 type AsyncQueueEntry<T> = {
   operation: Operation<T>;
-  promise: Deferred<T>;
-  childScope: AsyncQueue;
+  resolve: (value?: T) => void;
+  reject: (err: Error) => void;
 };
 
-@autobind
+export namespace AsyncQueue {
+  export type QueueImpl<T> = Pick<Array<T>, 'push'|'shift'|'length'>;
+}
+
+
 export class AsyncQueue {
-  protected depth: number = 0;
+  private static queueFactory: () => AsyncQueue.QueueImpl<any> = () => new LinkedList<any>();
+  public static setQueueImpl(queueFactory: () => AsyncQueue.QueueImpl<any>): void {
+    AsyncQueue.queueFactory = queueFactory;
+  }
+
   protected name: string;
-  private _size: number = 0;
-  private head: AsyncQueueNode<any>;
-  private tail: AsyncQueueNode<any>;
-  private running: boolean;
-  private currentScope: AsyncQueue;
+  private readonly queue: AsyncQueue.QueueImpl<any>;
+  private running: Promise<void>;
 
   constructor(name?: string) {
     this.name = name || 'AsyncQueue';
+    this.queue = AsyncQueue.queueFactory();
+    this.enqueue = this.enqueue.bind(this);
   }
 
   public async enqueue<T>(operation: Operation<T>): Promise<T> {
-    if(this.currentScope) {
-      return this.currentScope.enqueue(operation);
-    }
-    const entry: AsyncQueueEntry<T> = {
-      operation,
-      promise: deferred<T>(),
-      childScope: new ChildAsyncQueue(`${this.name}_${this.depth + 1}_${operation.name}`, this.depth + 1)
-    };
-    this.add(entry);
-    this.processQueue();
-    return await entry.promise;
+    return new Promise<T>((resolve, reject) => {
+      const entry: AsyncQueueEntry<T> = {
+        operation,
+        resolve,
+        reject
+      };
+      this.queue.push(entry);
+      this.runQueue();
+    });
   }
 
   public get size(): number {
-    return this._size;
+    return this.queue.length;
   }
 
-  private add(entry: AsyncQueueEntry<any>): void {
-    const node: AsyncQueueNode<any> = {entry, next: null};
-    if(!this.head) {
-      this.head = this.tail = node;
+  private runQueue() {
+    if(!this.running) {
+      const queue = this.runQueueInternal();
+      this.running = queue;
+      this.running
+        .then(() => this.running = null)
+        .catch(() => this.running = null);
+      return queue;
     } else {
-      const tail = this.tail;
-      tail.next = node;
-      this.tail = node;
+      return this.running;
     }
-    this._size++;
   }
-  private async processQueue(): Promise<void> {
-    if(this.running || !this.head) {
-      return;
-    }
-    this.running = true;
-    const current = this.head;
-    this.head = current.next;
-    const {promise} = current.entry;
-    try {
-      const result = await this.execute(current.entry);
-      promise.resolve(result);
-    } catch(e) {
-      promise.reject(e);
-    } finally {
-      this.running = false;
-      this._size--;
-      if(this._size) {
-        this.processQueue();
+
+  // Only one should be going at a time
+  private async runQueueInternal() {
+    while(this.queue.length) {
+      const current = this.queue.shift();
+      const {operation, resolve, reject} = current;
+      try {
+        const subtasks = new AsyncQueue();
+        const promise = operation(subtasks.enqueue);
+        await Promise.all([
+          subtasks.runQueue(),
+          promise
+        ]);
+        const result = await promise;
+        resolve(result);
+      } catch(e) {
+        reject(e);
       }
     }
-  }
-
-  private async execute<T>(entry: AsyncQueueEntry<T>): Promise<T> {
-    const {operation, childScope} = entry;
-    this.currentScope = childScope;
-    const result = operation(childScope.enqueue);
-    this.currentScope = null;
-    return await result;
-  }
-}
-
-class ChildAsyncQueue extends AsyncQueue {
-  constructor(name: string, depth: number) {
-    super(name);
-    this.depth = depth;
   }
 }

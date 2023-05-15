@@ -18,10 +18,12 @@ export async function testForMemoryLeak(fn: () => (void | Promise<void>), cutoff
   // Take final memory snapshot
   gc();
   const memEnd = getHeapSize();
+  const heapChange = memEnd - memStart;
 
-  if(memEnd - memStart > cutoffBytes) {
-    const heapChange = memEnd - memStart;
+  if(heapChange > cutoffBytes) {
     throw new Error(`Memory leak detected: heap grew by ${bytes(heapChange)}`);
+  } else if(heapChange > cutoffBytes / 3) {
+    console.warn(`Memory grew by ${bytes(heapChange)}. Try changing iteration count to verify no leak.`);
   }
 }
 
