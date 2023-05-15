@@ -1,4 +1,5 @@
 import {deferred, Deferred} from './deferred';
+import {testForMemoryLeak} from './testUtils/testMemLeak';
 
 describe('deferred', () => {
   let promise: Deferred<void>;
@@ -69,5 +70,19 @@ describe('deferred', () => {
         expect(callback).toHaveBeenCalled();
       }
     });
+  });
+
+  it('does not leak memory', async () => {
+    const memtest = testForMemoryLeak(async () => {
+      for(let i = 0; i < 100000; i++) {
+        let promise = new Deferred<string>();
+        promise.then(() => {});
+        promise.catch(() => {});
+        promise.resolve('test');
+        await promise;
+        promise = null;
+      }
+    });
+    await expectAsync(memtest).toBeResolved();
   });
 });

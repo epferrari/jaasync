@@ -1,12 +1,9 @@
-import {autobind} from 'core-decorators';
-
 enum AwaitableState {
-  Pending,
+  Pending = 0,
   Resolved,
   Rejected
 }
 
-@autobind
 export class Awaitable<T> implements Promise<T> {
   public [Symbol.toStringTag]: string = 'Promise';
 
@@ -15,6 +12,7 @@ export class Awaitable<T> implements Promise<T> {
   private _error: any;
   private _resolve: (value: T) => void;
   private _reject: (error: any) => void;
+  private _hasHandlers: boolean = false;
   private readonly _promise: Promise<T>;
 
   constructor() {
@@ -22,21 +20,40 @@ export class Awaitable<T> implements Promise<T> {
       this._resolve = resolve;
       this._reject = reject;
     });
+    this.then = this.then.bind(this);
+    this.catch = this.catch.bind(this);
+    this.finally = this.finally.bind(this);
+    this.resolve = this.resolve.bind(this);
+    this.reject = this.reject.bind(this);
   }
 
   public then<TResult1 = T, TResult2 = never>(
     onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null,
     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null
   ): Promise<TResult1 | TResult2> {
-    return this._promise.then(onfulfilled, onrejected);
+    const p = this._promise.then(onfulfilled, onrejected);
+    this.releaseUnhandledRejectionMitigation();
+    return p;
   }
 
   public catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): Promise<T | TResult> {
-    return this._promise.catch(onrejected);
+    const p = this._promise.catch(onrejected);
+    this.releaseUnhandledRejectionMitigation();
+    return p;
   }
 
   public finally(onfinally?: (() => void) | undefined | null): Promise<T> {
-    return this._promise.finally(onfinally);
+    const p = this._promise.finally(onfinally);
+    this.releaseUnhandledRejectionMitigation();
+    return p;
+  }
+
+  private releaseUnhandledRejectionMitigation() {
+    const hadHandlers = this._hasHandlers;
+    this._hasHandlers = true;
+    if(this._state === AwaitableState.Rejected && !hadHandlers) {
+      this._reject(this._error);
+    }
   }
 
   protected resolve(value: T): void {
@@ -51,7 +68,10 @@ export class Awaitable<T> implements Promise<T> {
     if(this._state === AwaitableState.Pending) {
       this._state = AwaitableState.Rejected;
       this._error = error;
-      this._reject(error);
+      // mitigate unhandled rejections
+      if(this._hasHandlers) {
+        this._reject(error);
+      }
     }
   }
 
