@@ -1,8 +1,9 @@
 import * as bytes from 'bytes';
-const gc = require('expose-gc/function');
 
 // If more than 1024kb of heap are created during the function execution, error
 const defaultCutoffBytes: number = Math.pow(2, 20);
+
+const {gc} = global;
 
 export async function testForMemoryLeak(fn: () => (void | Promise<void>), cutoffBytes: number = defaultCutoffBytes) {
   if(!gc) {
