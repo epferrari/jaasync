@@ -23,6 +23,9 @@
     "await"
   ],
   "author": "Ethan Ferrari <github@ethanferrari.com>",
+  "contributors": [
+    "Kurt Preston <kurt@kurtpreston.com>"
+  ],
   "repository": "https://github.com/epferrari/jaasync",
   "license": "MIT",
   "dependencies": {
