@@ -66,12 +66,9 @@ export class AsyncQueue {
       const {operation, resolve, reject} = current;
       try {
         const subtasks = new AsyncQueue();
-        const promise = operation(subtasks.enqueue);
-        await Promise.all([
-          subtasks.runQueue(),
-          promise
-        ]);
-        const result = await promise;
+        const result = await operation(subtasks.enqueue);
+        // ensure any subtasks that weren't awaited in the operation invocation are flushed
+        await subtasks.runQueue();
         resolve(result);
       } catch(e) {
         reject(e);
