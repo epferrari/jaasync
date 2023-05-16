@@ -1,6 +1,6 @@
 {
   "name": "jaasync",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Just another async utility library",
   "main": "lib/index.js",
   "types": "lib/index.d.js",
