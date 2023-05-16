@@ -4,7 +4,7 @@ import {deferred, Deferred} from './deferred';
 import {AsyncQueue, Enqueue} from './queue';
 import {sleep} from './sleep';
 
-fdescribe('AsyncQueue', () => {
+describe('AsyncQueue', () => {
   let spy1: jasmine.Spy<any>;
   let spy2: jasmine.Spy<any>;
   let spy3: jasmine.Spy<any>;
@@ -232,7 +232,7 @@ fdescribe('AsyncQueue', () => {
     });
   });
 
-  fdescribe('does not leak memory', () => {
+  describe('does not leak memory', () => {
     it('when a flat queue is run', async () => {
       const queue = new AsyncQueue();
       const memtest = testForMemoryLeak(async () => {
