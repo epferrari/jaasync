@@ -8,7 +8,7 @@
     "dev": "./node_modules/.bin/tsc -p tsconfig.dev.json",
     "dist": "./node_modules/.bin/tsc -p tsconfig.dist.json",
     "lint": "eslint .",
-    "test": "npm run dev && ./node_modules/.bin/jasmine lib/*_spec.js",
+    "test": "npm run dev && node --expose-gc ./node_modules/.bin/jasmine lib/*_spec.js",
     "validate": "npm run test && npm run lint",
     "install": "([ -d ./src ] && [ ! -d ./lib ] && mkdir lib && npm install . &&  npm run dist) || echo ''",
     "prepublish": "rm -rf ./lib && npm run dist",
@@ -44,8 +44,7 @@
     "eslint-plugin-jsdoc": "^39.3.2",
     "eslint-plugin-prefer-arrow": "^1.2.3",
     "eslint-plugin-unicorn": "^42.0.0",
-    "expose-gc": "^1.0.0",
-    "jasmine": "^3.6.1",
+    "jasmine": "^3.99.0",
     "typedoc": "^0.22",
     "typescript": "^4.7.3"
   }
