@@ -1,10 +1,12 @@
+import {InspectablePromise} from './inspectable';
+
 enum AwaitableState {
   Pending = 0,
   Resolved,
   Rejected
 }
 
-export class Awaitable<T> implements Promise<T> {
+export class Awaitable<T> implements Promise<T>, InspectablePromise<T> {
   public [Symbol.toStringTag]: string = 'Promise';
 
   private _state: AwaitableState = AwaitableState.Pending;

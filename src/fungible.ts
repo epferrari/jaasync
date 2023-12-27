@@ -1,6 +1,7 @@
 import {autobind} from 'core-decorators';
 
 import {isPromise} from './utils/isPromise';
+import {InspectablePromise} from './inspectable';
 
 export interface Swappable<T> {
   (wasCanceled: () => boolean): Promise<T>;
@@ -12,13 +13,18 @@ export function fungible<T>(target: Promise<T>|Swappable<T>): FungiblePromise<T>
 
 
 @autobind
-export class FungiblePromise<T> implements Promise<T> {
+export class FungiblePromise<T> implements Promise<T>, InspectablePromise<T> {
   public [Symbol.toStringTag]: string = 'Promise';
 
   private _i: number = 0;
+  private _resolved: boolean = false;
+  private _rejected: boolean = false;
   private _pending: boolean = true;
   private _resolve: (value: T) => void;
   private _reject: (error: any) => void;
+  private _value: T;
+  private _error: any;
+
   private readonly _promise: Promise<T>;
 
   constructor(promise: Promise<T>|Swappable<T>) {
@@ -52,17 +58,37 @@ export class FungiblePromise<T> implements Promise<T> {
   }
 
   private resolve(value: T): void {
+    this._value = value;
     this._pending = false;
+    this._resolved = true;
     this._resolve(value);
   }
 
   private reject(error: any): void {
+    this._error = error;
     this._pending = false;
+    this._rejected = true;
     this._reject(error);
+  }
+
+  public get resolved(): boolean {
+    return this._resolved;
+  }
+
+  public get rejected(): boolean {
+    return this._rejected;
   }
 
   public get pending(): boolean {
     return this._pending;
+  }
+
+  public get value(): T {
+    return this._value;
+  }
+
+  public get error(): any {
+    return this._error;
   }
 
   private async bind(target: Promise<T>|Swappable<T>): Promise<void> {

@@ -52,6 +52,26 @@ describe('fungible', () => {
       expect(f.pending).toBe(false);
     });
 
+    it('exposes its resolved state as true', async () => {
+      const p1: Deferred<string> = deferred<string>();
+      const f = fungible(p1);
+      expect(f.pending).toBe(true);
+
+      p1.resolve('foo');
+      await sleep(0);
+      expect(f.resolved).toBe(true);
+    });
+
+    it('exposes its value', async () => {
+      const p1: Deferred<string> = deferred<string>();
+      const f = fungible(p1);
+      expect(f.pending).toBe(true);
+
+      p1.resolve('foo');
+      await sleep(0);
+      expect(f.value).toEqual('foo');
+    });
+
     describe('#swap', () => {
       it('throws an error', async() => {
         const p1: Deferred<string> = deferred<string>();
@@ -74,9 +94,38 @@ describe('fungible', () => {
       const f = fungible(p1);
       expect(f.pending).toBe(true);
 
-      p1.resolve('foo');
+      const onReject: jasmine.Spy = jasmine.createSpy('onReject');
+      f.catch(onReject);
+
+      p1.reject('foo');
       await sleep(0);
       expect(f.pending).toBe(false);
+    });
+
+    it('exposes its rejected state as true', async () => {
+      const p1: Deferred<string> = deferred<string>();
+      const f = fungible(p1);
+      expect(f.pending).toBe(true);
+
+      const onReject: jasmine.Spy = jasmine.createSpy('onReject');
+      f.catch(onReject);
+
+      p1.reject('foo');
+      await sleep(0);
+      expect(f.rejected).toBe(true);
+    });
+
+    it('exposes its rejected state as true', async () => {
+      const p1: Deferred<string> = deferred<string>();
+      const f = fungible(p1);
+      expect(f.pending).toBe(true);
+
+      const onReject: jasmine.Spy = jasmine.createSpy('onReject');
+      f.catch(onReject);
+
+      p1.reject('foo');
+      await sleep(0);
+      expect(f.error).toEqual('foo');
     });
 
     describe('#swap', () => {
