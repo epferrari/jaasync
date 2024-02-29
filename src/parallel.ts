@@ -1,5 +1,4 @@
 import {isFunction} from './utils/isFunction';
-import {isPromise} from './utils/isPromise';
 
 /* eslint-disable @typescript-eslint/no-invalid-this */
 

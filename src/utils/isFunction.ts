@@ -1,3 +1,3 @@
 export function isFunction(x: any): x is Function {
-  return typeof x === 'function';
+  return (typeof x).endsWith('function');
 }
