@@ -1,4 +1,4 @@
-import {isPromise} from './utils/isPromise';
+import {isFunction} from './utils/isFunction';
 
 /* eslint-disable @typescript-eslint/no-invalid-this */
 
@@ -15,12 +15,12 @@ export interface ParallelResult<T> {
 }
 
 
-export async function parallel<T>(promises: (parallel.Parallelizable<T>|Promise<T>)[]): Promise<ParallelResult<T>> {
+export async function parallel<T>(promises: (T | parallel.Parallelizable<T> | Promise<T>)[]): Promise<ParallelResult<T>> {
   const wrapper = promises.map(async (p, index) => {
     try {
-      const value: T = isPromise<T>(p)
-        ? await p
-        : await p();
+      const value: T = isFunction(p)
+        ? await p()
+        : await p;
       return {fulfilled: true, value, index};
     } catch (e) {
       let error: Error;
@@ -81,7 +81,7 @@ export async function parallel<T>(promises: (parallel.Parallelizable<T>|Promise<
 }
 
 export namespace parallel {
-  export type Parallelizable<T> = () => Promise<T>|T;
+  export type Parallelizable<T> = () => Promise<T> | T;
   export type ResolutionStatus = {fulfilled: boolean};
   export type Fulfillment<T> = ResolutionStatus & {value: T, error: null, index: number};
   export type Rejection = ResolutionStatus & {error: Error, value: null, index: number};

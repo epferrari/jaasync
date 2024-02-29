@@ -133,4 +133,32 @@ describe('parallel', () => {
       });
     });
   });
+
+  describe('given non-promise values', () => {
+    const smorgasborg = [
+      'foo',
+      42,
+      false,
+      null,
+      {},
+      []
+    ];
+
+    it('returns standard objects and scalars', async () => {
+      const results = await parallel<any>(smorgasborg);
+      expect(results.items.map((item) => item.value)).toEqual(smorgasborg);
+    });
+
+    it('will handle functions that return non-promise values', async () => {
+      const smorgasborgFns: parallel.Parallelizable<any>[] = smorgasborg.map((value) => () => value);
+      const results = await parallel<any>(smorgasborgFns);
+      expect(results.items.map((item) => item.value)).toEqual(smorgasborg);
+    });
+
+    it('will handle functions that return promises', async () => {
+      const smorgasborgAsyncFns: parallel.Parallelizable<any>[] = smorgasborg.map((value) => async () => value);
+      const results = await parallel<any>(smorgasborgAsyncFns);
+      expect(results.items.map((item) => item.value)).toEqual(smorgasborg);
+    });
+  });
 });
