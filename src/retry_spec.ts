@@ -137,7 +137,7 @@ describe('retry', () => {
         const r = retry<string>(createTask(0));
 
         r.catch((e) => {
-          done.fail(e);
+          done.fail(e as Error);
         });
 
         setTimeout(() => {

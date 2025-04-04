@@ -12,7 +12,8 @@ export {
 } from './fungible';
 export {isPromise} from './utils/isPromise';
 export {parallel, ParallelResult} from './parallel';
-export {retry, cancelable} from './retry';
+export {retry} from './retry';
+export {cancelable} from './cancelable';
 export {safe} from './safe';
 export {sleep} from './sleep';
 export {timeout, TimeoutExpiredError} from './timeout';

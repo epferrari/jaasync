@@ -41,6 +41,7 @@ export function retry<T>(
   let cancel: Canceller;
   let done = false;
 
+  /* eslint-disable @typescript-eslint/no-misused-promises */
   const p = new Promise<T>(async (resolve, reject) => {
     let attempts = 0;
     let awaiter: CancelablePromise<void>;
@@ -89,7 +90,7 @@ export function retry<T>(
         resolve(result);
         break;
       } catch (err) {
-        onError?.(err, params);
+        onError?.(err as Error, params);
         if(done) {
           break;
         }
@@ -121,13 +122,10 @@ export function retry<T>(
 }
 
 export namespace retry {
+  /* eslint-disable no-shadow */
   export enum State {
     Canceled,
     Pending,
     Exhausted
   }
-}
-
-export function cancelable<T>(task: () => Promise<T>): CancelablePromise<T> {
-  return retry(task, {maxRetryAttempts: 0});
 }
