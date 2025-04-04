@@ -134,7 +134,8 @@ describe('AsyncQueue', () => {
         await sleep(0);
         expect(spy1).toHaveBeenCalled();
         expect(spy2).not.toHaveBeenCalled();
-        await deferred1.resolve();
+        deferred1.resolve();
+        await deferred1;
         await sleep(0);
         expect(spy2).toHaveBeenCalled();
       });
@@ -191,11 +192,13 @@ describe('AsyncQueue', () => {
         expect(spy1).toHaveBeenCalled();
         expect(spy2).not.toHaveBeenCalled();
         expect(spy3).not.toHaveBeenCalled();
-        await deferred1.resolve();
+        deferred1.resolve();
+        await deferred1;
         await sleep(0);
         expect(spy2).toHaveBeenCalled();
         expect(spy3).not.toHaveBeenCalled();
-        await deferred2.resolve();
+        deferred2.resolve();
+        await deferred2;
         await sleep(0);
         expect(spy3).toHaveBeenCalled();
       });
@@ -248,7 +251,7 @@ describe('AsyncQueue', () => {
     it('when a nested queue is run', async () => {
       const queue = new AsyncQueue();
       const memtest = testForMemoryLeak(async () => {
-        let promises: Promise<void>[] = [];
+        const promises: Promise<void>[] = [];
         for(let i = 0; i <= 100_000; i++) {
           promises.push(queue.enqueue(async (enqueue: Enqueue<any>) => (
             enqueue(() => {})

@@ -1,6 +1,6 @@
 import {CancelablePromise} from './cancelablePromise';
 import {Deferred, deferred} from './deferred';
-import {cancelable} from './retry';
+import {cancelable} from './cancelable';
 import {sleep} from './sleep';
 import {timeout, TimeoutExpiredError} from './timeout';
 

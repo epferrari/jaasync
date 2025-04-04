@@ -28,8 +28,8 @@ export async function parallel<T>(promises: (T | parallel.Parallelizable<T> | Pr
         error = e;
       } else {
         try {
-          error = new Error(e.toString());
-        } catch(e) {
+          error = new Error(String(e));
+        } catch(e2) {
           error = new Error(`parallel execution error at index ${index}.`);
         }
       }
@@ -83,8 +83,8 @@ export async function parallel<T>(promises: (T | parallel.Parallelizable<T> | Pr
 export namespace parallel {
   export type Parallelizable<T> = () => Promise<T> | T;
   export type ResolutionStatus = {fulfilled: boolean};
-  export type Fulfillment<T> = ResolutionStatus & {value: T, error: null, index: number};
-  export type Rejection = ResolutionStatus & {error: Error, value: null, index: number};
+  export type Fulfillment<T> = ResolutionStatus & {value: T; error: null; index: number};
+  export type Rejection = ResolutionStatus & {error: Error; value: null; index: number};
   // this oddity is because in node, an immediately invoked async function
   // that results in rejected promise, even though caught in parallel, is still being
   // treated as an unhandled rejection

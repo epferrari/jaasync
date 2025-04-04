@@ -1,4 +1,4 @@
-import {CancelablePromise} from "./cancelablePromise";
+import {CancelablePromise} from './cancelablePromise';
 
 export class TimeoutExpiredError extends Error {
   public constructor(ms: number) {
@@ -13,9 +13,9 @@ export class TimeoutExpiredError extends Error {
 
 export function timeout<T>(
   promise: Promise<T>,
-  options: (number)|{ms: number, cancelUnderlyingPromiseOnTimeout?: boolean}
+  options: (number)|{ms: number; cancelUnderlyingPromiseOnTimeout?: boolean}
 ): Promise<T> {
-  const {ms, cancelUnderlyingPromiseOnTimeout = false} = (typeof options == 'number')
+  const {ms, cancelUnderlyingPromiseOnTimeout = false} = (typeof options === 'number')
     ? {ms: options, cancelUnderlyingPromiseOnTimeout: false}
     : options;
   let pending = true;
