@@ -16,7 +16,7 @@ describe('cancelable', () => {
 
       const c = cancelable(task);
 
-      c.catch(() => void(0));
+      c.catch(() => {});
 
       expect(flag).toBeFalse();
       expect(complete).toBeFalse();

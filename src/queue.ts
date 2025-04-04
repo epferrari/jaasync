@@ -51,8 +51,12 @@ export class AsyncQueue {
       const queue = this.runQueueInternal();
       this.running = queue;
       this.running
-        .then(() => this.running = null)
-        .catch(() => this.running = null);
+        .then(() => {
+          this.running = null;
+        })
+        .catch(() => {
+          this.running = null;
+        });
       return queue;
     } else {
       return this.running;

@@ -1,4 +1,4 @@
-import * as bytes from 'bytes';
+import {default as bytes} from 'bytes';
 
 // If more than 1024kb of heap are created during the function execution, error
 const defaultCutoffBytes: number = Math.pow(2, 20);
